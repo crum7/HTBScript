@@ -34,58 +34,8 @@ domain="http://$machine_name.htb"
 echo "Adding $IP $machine_name.htb to /etc/hosts"
 sudo sh -c "echo '$IP $machine_name.htb' >> /etc/hosts"
 
-# mate-terminal を使って複数タブでコマンドを実行
+# mate-terminal を使って複数タブでコマンドを実行 (nmap, whatweb, 条件分岐を修正)
 mate-terminal \
-    --tab --title="Nmap,Whatweb " -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 --reason $IP; echo 'Running whatweb...'; sudo whatweb http://$domain; exec bash" \
-    --tab --title="Feroxbuster" -- bash -c "echo 'Running feroxbuster...'; feroxbuster -u $domain; exec bash" \
-    --tab --title="Dirsearch" -- bash -c "echo 'Running dirsearch...'; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; exec bash" \
-    --tab --title="FFUF" -- bash -c "echo 'Running ffuf...'; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; exec bash"
-
-# nmapスキャンを変数に保存
-nmap_info=$(sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP)
-echo "Nmap scan completed:"
-echo "$nmap_info"
-
-# HTTP/HTTPSに応じた条件分岐
-if echo "$nmap_info" | grep -q "80/tcp"; then
-    echo "Port 80 detected. Running HTTP-specific tasks..."
-    feroxbuster_info=$(feroxbuster -u $domain)
-    echo "Feroxbuster output:"
-    echo "$feroxbuster_info"
-
-    sudo apt install dirsearch -y
-    dirbuster_simple_info=$(sudo dirsearch -u $domain -t 50 -i 200)
-    echo "Dirsearch (simple) output:"
-    echo "$dirbuster_simple_info"
-    
-    dirbuster_complicated_info=$(sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple)
-    echo "Dirsearch (complicated) output:"
-    echo "$dirbuster_complicated_info"
-
-    ffuf_info=$(ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H "Host: FUZZ.$domain" -mc 200)
-    echo "FFUF output:"
-    echo "$ffuf_info"
-
-elif echo "$nmap_info" | grep -q "443/tcp"; then
-    echo "Port 443 detected. Running HTTPS-specific tasks..."
-    domain="https://$machine_name.htb"
-
-    feroxbuster_info=$(feroxbuster -u $domain)
-    echo "Feroxbuster output:"
-    echo "$feroxbuster_info"
-
-    sudo apt install dirsearch -y
-    dirbuster_simple_info=$(sudo dirsearch -u $domain -t 50 -i 200)
-    echo "Dirsearch (simple) output:"
-    echo "$dirbuster_simple_info"
-    
-    dirbuster_complicated_info=$(sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple)
-    echo "Dirsearch (complicated) output:"
-    echo "$dirbuster_complicated_info"
-
-    ffuf_info=$(ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H "Host: FUZZ.$domain" -mc 200)
-    echo "FFUF output:"
-    echo "$ffuf_info"
-else
-    echo "No HTTP/HTTPS ports detected. Exiting."
-fi
+    --tab --title="Nmap,Whatweb " -- bash -c "sudo nmap -vvv -sCV -T4 -p0-65535 --reason $IP; echo 'Running whatweb...'; sleep 3; sudo whatweb http://$IP; exec bash" \
+    --tab --title="HTTP Tasks" -- bash -c "echo 'Waiting for port 80/tcp to be discovered...'; sudo nmap -vvv -sCV -T4 -p80 --reason $IP | while read -r line; do if [[ \$line == *'Discovered open port 80/tcp'* ]]; then echo 'Port 80 detected. Running HTTP-specific tasks...'; feroxbuster -u http://$machine_name.htb; sudo dirsearch --url=http://$machine_name.htb --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u http://$machine_name.htb -H 'Host: FUZZ.$domain' -mc 200; break; fi; done; exec bash" \
+    --tab --title="HTTPS Tasks" -- bash -c "echo 'Waiting for port 443/tcp to be discovered...'; sudo nmap -vvv -sCV -T4 -p443 --reason $IP | while read -r line; do if [[ \$line == *'Discovered open port 443/tcp'* ]]; then echo 'Port 443 detected. Running HTTPS-specific tasks...'; domain='https://$machine_name.htb'; feroxbuster -u $domain; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; break; fi; done; exec bash"

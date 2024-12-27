@@ -34,16 +34,17 @@ domain="http://$machine_name.htb"
 echo "Adding $IP $machine_name.htb to /etc/hosts"
 sudo sh -c "echo '$IP $machine_name.htb' >> /etc/hosts"
 
-# nmapスキャン
+# mate-terminal を使って複数タブでコマンドを実行
+mate-terminal \
+    --tab --title="Nmap" -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP; exec bash" \
+    --tab --title="Feroxbuster" -- bash -c "echo 'Running feroxbuster...'; feroxbuster -u $domain; exec bash" \
+    --tab --title="Dirsearch" -- bash -c "echo 'Running dirsearch...'; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; exec bash" \
+    --tab --title="FFUF" -- bash -c "echo 'Running ffuf...'; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; exec bash"
+
+# nmapスキャンを変数に保存
 nmap_info=$(sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP)
 echo "Nmap scan completed:"
 echo "$nmap_info"
-
-# タブを開いてコマンドを実行（mate-terminal）
-mate-terminal --title="Nmap" -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP; exec bash" &
-mate-terminal --title="Feroxbuster" -- bash -c "echo 'Running feroxbuster...'; feroxbuster -u $domain; exec bash" &
-mate-terminal --title="Dirsearch" -- bash -c "echo 'Running dirsearch...'; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; exec bash" &
-mate-terminal --title="FFUF" -- bash -c "echo 'Running ffuf...'; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; exec bash" &
 
 # HTTP/HTTPSに応じた条件分岐
 if echo "$nmap_info" | grep -q "80/tcp open"; then

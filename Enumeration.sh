@@ -39,11 +39,11 @@ nmap_info=$(sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP)
 echo "Nmap scan completed:"
 echo "$nmap_info"
 
-# タブを開いてコマンドを実行
-gnome-terminal -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP; exec bash" &
-gnome-terminal -- bash -c "echo 'Running feroxbuster...'; feroxbuster -u $domain; exec bash" &
-gnome-terminal -- bash -c "echo 'Running dirsearch...'; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; exec bash" &
-gnome-terminal -- bash -c "echo 'Running ffuf...'; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; exec bash" &
+# タブを開いてコマンドを実行（Parrot Terminal用）
+parrot-terminal --name "Nmap" -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP; exec bash" &
+parrot-terminal --name "Feroxbuster" -- bash -c "echo 'Running feroxbuster...'; feroxbuster -u $domain; exec bash" &
+parrot-terminal --name "Dirsearch" -- bash -c "echo 'Running dirsearch...'; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; exec bash" &
+parrot-terminal --name "FFUF" -- bash -c "echo 'Running ffuf...'; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; exec bash" &
 
 # HTTP/HTTPSに応じた条件分岐
 if echo "$nmap_info" | grep -q "80/tcp open"; then

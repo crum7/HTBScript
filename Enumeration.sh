@@ -36,7 +36,7 @@ sudo sh -c "echo '$IP $machine_name.htb' >> /etc/hosts"
 
 # mate-terminal を使って複数タブでコマンドを実行
 mate-terminal \
-    --tab --title="Nmap" -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 -Pn --reason $IP; exec bash" \
+    --tab --title="Nmap" -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 --reason $IP; exec bash" \
     --tab --title="Feroxbuster" -- bash -c "echo 'Running feroxbuster...'; feroxbuster -u $domain; exec bash" \
     --tab --title="Dirsearch" -- bash -c "echo 'Running dirsearch...'; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; exec bash" \
     --tab --title="FFUF" -- bash -c "echo 'Running ffuf...'; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; exec bash"

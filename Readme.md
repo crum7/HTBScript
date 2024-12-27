@@ -5,5 +5,5 @@ HTBでよく使うお決まりコマンドをいちいち打つのめんどく�
 git clone https://github.com/crum7/HTBScript.git
 cd HTBScript
 chmod +x *.sh
-./Enumeration.sh
+./Enumeration.sh --ip <IP> --name <NAME>
 ```

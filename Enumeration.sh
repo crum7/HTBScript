@@ -36,7 +36,7 @@ sudo sh -c "echo '$IP $machine_name.htb' >> /etc/hosts"
 
 # mate-terminal を使って複数タブでコマンドを実行
 mate-terminal \
-    --tab --title="Nmap" -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 --reason $IP; exec bash" \
+    --tab --title="Nmap,Whatweb " -- bash -c "echo 'Running nmap...'; sudo nmap -vvv -sCV -T4 -p0-65535 --reason $IP; echo 'Running whatweb...'; sudo whatweb http://$domain; exec bash" \
     --tab --title="Feroxbuster" -- bash -c "echo 'Running feroxbuster...'; feroxbuster -u $domain; exec bash" \
     --tab --title="Dirsearch" -- bash -c "echo 'Running dirsearch...'; sudo dirsearch --url=$domain --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --threads 30 --random-agent --format=simple; exec bash" \
     --tab --title="FFUF" -- bash -c "echo 'Running ffuf...'; ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -u $domain -H 'Host: FUZZ.$domain' -mc 200; exec bash"
@@ -47,7 +47,7 @@ echo "Nmap scan completed:"
 echo "$nmap_info"
 
 # HTTP/HTTPSに応じた条件分岐
-if echo "$nmap_info" | grep -q "80/tcp open"; then
+if echo "$nmap_info" | grep -q "80/tcp"; then
     echo "Port 80 detected. Running HTTP-specific tasks..."
     feroxbuster_info=$(feroxbuster -u $domain)
     echo "Feroxbuster output:"
@@ -66,7 +66,7 @@ if echo "$nmap_info" | grep -q "80/tcp open"; then
     echo "FFUF output:"
     echo "$ffuf_info"
 
-elif echo "$nmap_info" | grep -q "443/tcp open"; then
+elif echo "$nmap_info" | grep -q "443/tcp"; then
     echo "Port 443 detected. Running HTTPS-specific tasks..."
     domain="https://$machine_name.htb"
 

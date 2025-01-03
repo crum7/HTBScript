@@ -70,7 +70,7 @@ mate-terminal \
         echo \"[+] Delaying Dirsearch start by 70 seconds...\";
         sleep 70;
         echo \"[*] sudo dirsearch --url=$domain \";
-        sudo apt install dirsearch;
+        sudo apt install dirsearch -y;
         sudo dirsearch --url=$domain \
                        --wordlist=/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
                        --threads 30 \
